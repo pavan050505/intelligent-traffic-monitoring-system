@@ -1,0 +1,9 @@
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.weights
+*.cfg
+*.names
+uploads/
+vehicle detection and category wise counting/*.mp4
