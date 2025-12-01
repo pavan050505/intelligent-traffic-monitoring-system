@@ -1,19 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Detection & Counting</title>
+    <title>AI-Powered Intelligent Traffic Analysis</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <style>
+        body { margin: 0; font-family: "Poppins", sans-serif; overflow: hidden; }
+        #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; }
+
+        .container {
+            max-width: 600px;
+            margin: 12vh auto;
+            padding: 45px;
+            border-radius: 18px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            transition: 0.4s;
+        }
+
+        [data-theme="dark"] .container { background: rgba(255,255,255,0.08); color: white; }
+        [data-theme="light"] .container { background: rgba(0,0,0,0.08); color: #0a2647; }
+
+        input {
+            background: white;
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 35px;
+            border-radius: 10px;
+            background: #00d4ff;
+            color: #003b6d;
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .3s;
+        }
+        button:hover { transform: scale(1.05); }
+
+        #switch {
+            position: absolute;
+            top: 22px;
+            right: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px 15px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.3);
+        }
+    </style>
 </head>
+
 <body>
+    <div id="particles-js"></div>
+
+    <button id="switch">🌙 Dark Mode</button>
+
     <div class="container">
-        <h1>Vehicle Detection and Counting</h1>
-        <p>Upload a video to detect and count vehicles by category.</p>
-        <form action="/" method="post" enctype="multipart/form-data">
-            <input type="file" name="file" required>
-            <button type="submit">Upload Video</button>
+        <h1>AI-Powered Intelligent Traffic Analysis</h1>
+        <p>Upload a traffic video to begin real-time analysis.</p>
+
+        <form class="upload" action="/" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="video/*" required>
+            <button type="submit">🚀 Upload & Analyze</button>
         </form>
     </div>
+
+    <script>
+        // Theme Toggle
+        const html = document.documentElement;
+        document.getElementById("switch").onclick = () => {
+            if (html.dataset.theme === "dark") {
+                html.dataset.theme = "light";
+                switch.innerHTML = "🌙 Dark Mode";
+            } else {
+                html.dataset.theme = "dark";
+                switch.innerHTML = "☀ Light Mode";
+            }
+        };
+
+        // Particles Background
+        particlesJS.load("particles-js", "https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json");
+    </script>
 </body>
 </html>

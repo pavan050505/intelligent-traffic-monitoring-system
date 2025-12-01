@@ -1,3 +1,0 @@
-road_name,road_type,lanes,length_km,speed_limit,has_signal,nearby_hospitals
-Kranti Chowk Road,Main,4,3.0,50,True,XYZ Hospital
-CIDCO Road,Secondary,2,2.5,40,False,ABC Hospital

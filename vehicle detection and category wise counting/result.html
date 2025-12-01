@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Intelligent Traffic Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f7fb; margin: 0; }
+        .page { padding: 28px; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { font-size: 32px; margin: 0; color: #0c2b52; }
+        .header p { margin-top: 8px; color: #34495e; }
+
+        .btn-back {
+            padding: 10px 20px;
+            background: #0c7bff;
+            border-radius: 9px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 15px;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .btn-back:hover { background: #0668d2; }
+
+        .dashboard {
+            display: grid;
+            gap: 22px;
+            grid-template-columns: 1.5fr 1fr;
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .panel h2 { margin-bottom: 15px; }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #eef4ff;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        .label { font-size: 14px; color: #4f5d75; }
+        .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+
+        video, img { width: 100%; border-radius: 12px; }
+
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page">
+    <header class="header">
+        <h1>AI-Powered Intelligent Traffic Analysis</h1>
+        <p>Live video + AI traffic safety dashboard</p>
+        <a href="/" class="btn-back">⬅ Upload another video</a>
+    </header>
+
+    <main class="dashboard">
+        <!-- Live video -->
+        <section class="panel video">
+            <h2>Live Processed Video</h2>
+            <img id="liveStream" src="{{ live_url }}" alt="Live stream">
+        </section>
+
+        <!-- Insights -->
+        <section class="panel insights">
+            <div class="cards">
+                <div class="card">
+                    <div class="label">Accident Risk</div>
+                    <div class="value"><span id="riskText">—</span> %</div>
+                </div>
+                <div class="card">
+                    <div class="label">Vehicles in Zone</div>
+                    <div class="value" id="vehiclesZoneText">—</div>
+                </div>
+                <div class="card">
+                    <div class="label">Avg Speed in Zone</div>
+                    <div class="value"><span id="speedText">—</span> km/h</div>
+                </div>
+                <div class="card">
+                    <div class="label">Zone Density</div>
+                    <div class="value" id="densityText">—</div>
+                </div>
+                <div class="card">
+                    <div class="label">Weather</div>
+                    <div class="value" id="weatherText">No weather data</div>
+                </div>
+            </div>
+
+            <div class="chart">
+                <canvas id="countChart"></canvas>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    let chart;
+
+    function initChart() {
+        const ctx = document.getElementById('countChart');
+        chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Car', 'Truck', 'Bus', 'Motorbike'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#3b82f6','#ef4444','#f59e0b','#10b981']
+                }]
+            },
+            options: { plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    function updateDashboard() {
+        fetch('/status_data')
+            .then(r => r.json())
+            .then(data => {
+                if (!data) return;
+
+                document.getElementById('riskText').textContent = data.risk_percent;
+                document.getElementById('vehiclesZoneText').textContent = data.vehicles_in_zone;
+                document.getElementById('speedText').textContent = data.avg_speed;
+                document.getElementById('densityText').textContent = data.density;
+                document.getElementById('weatherText').textContent = data.weather;
+
+                const c = data.counts || {car:0, truck:0, bus:0, motorbike:0};
+                chart.data.datasets[0].data = [c.car || 0, c.truck || 0, c.bus || 0, c.motorbike || 0];
+                chart.update();
+            })
+            .catch(console.error);
+    }
+
+    window.onload = () => {
+        initChart();
+        setInterval(updateDashboard, 1000);
+    };
+</script>
+
+</body>
+</html>

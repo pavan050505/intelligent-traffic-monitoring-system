@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Processing...</title>
+<style>
+    body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #0a2647;
+        color: white;
+        font-family: "Poppins", sans-serif;
+    }
+    .loader {
+        text-align: center;
+        animation: fade 1s infinite alternate;
+    }
+    .loader img {
+        width: 160px;
+        animation: bounce 1s infinite ease-in-out;
+    }
+    @keyframes bounce { 50% { transform: translateY(-12px); } }
+    @keyframes fade { 100% { opacity: 0.4; } }
+</style>
+<script>
+    setInterval(() => fetch("/status_data")
+        .then(r => r.json())
+        .then(d => { if (d.vehicles_in_zone !== undefined) window.location.href = "/result"; }), 2000);
+</script>
+</head>
+
+<body>
+<div class="loader">
+    <img src="https://i.gifer.com/7plk.gif">
+    <h2>⚙ Analyzing Video with AI...</h2>
+    <p>Please wait while we detect vehicles, speeds and accident risk.</p>
+</div>
+</body>
+</html>

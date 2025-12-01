@@ -1,74 +1,71 @@
 import cv2
 import numpy as np
-def center_handle(x, y, w, h):
-    x_center = int((x + x + w) / 2)
-    y_center = int((y + y + h) / 2)
-    return x_center, y_center
-cap = cv2.VideoCapture("C:\vehicle detection and category wise counting\video (1).mp4")  
-count_line_position = 550
-offset = 6  
-min_width_react = 80 
-min_height_react = 80 
-algo = cv2.bgsegm.createBackgroundSubtractorMOG()
 
-current_vehicles = []
-counter = {"Car": 0, "Truck": 0, "Bike": 0}
+# Load YOLO
+net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg")
+classes = []
+with open("coco.names", "r") as f:
+    classes = f.read().splitlines()
+
+# Video
+cap = cv2.VideoCapture(r"C:\vehicle detection and category wise counting\video (1).mp4")
+
+# Counting Line
+count_line_position = 550
+offset = 10
+
+# Counters
+counter = {"car": 0, "truck": 0, "motorbike": 0}
+vehicle_centers = []
+
 while True:
-    ret, frame1 = cap.read()
+    ret, frame = cap.read()
     if not ret:
         break
 
-    grey = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(grey, (3, 3), 5)
-    img_sub = algo.apply(blur)
-    dilat = cv2.dilate(img_sub, np.ones((5, 5)))
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    dilatada = cv2.morphologyEx(dilat, cv2.MORPH_CLOSE, kernel)
-    dilatada = cv2.morphologyEx(dilatada, cv2.MORPH_CLOSE, kernel)
+    height, width = frame.shape[:2]
 
-    counterShape, _ = cv2.findContours(dilatada, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Preprocessing for YOLO
+    blob = cv2.dnn.blobFromImage(frame, 1/255, (416,416), swapRB=True, crop=False)
+    net.setInput(blob)
+    output_layers = net.forward(net.getUnconnectedOutLayersNames())
 
-    cv2.line(frame1, (25, count_line_position), (1200, count_line_position), (255, 127, 0), 3)
+    detections = []
+    for output in output_layers:
+        for detection in output:
+            scores = detection[5:]
+            class_id = np.argmax(scores)
+            confidence = scores[class_id]
+            if confidence > 0.5 and classes[class_id] in ["car", "truck", "motorbike"]:
+                cx, cy, w, h = detection[0:4] * np.array([width, height, width, height])
+                x = int(cx - w / 2)
+                y = int(cy - h / 2)
+                detections.append([x, y, int(w), int(h), classes[class_id]])
 
-    current_vehicles = []
-    for c in counterShape:
-        (x, y, w, h) = cv2.boundingRect(c)
-        validate_counter = (w >= min_width_react) and (h >= min_height_react)
+    for x, y, w, h, label in detections:
+        x_center = int((x + x + w) / 2)
+        y_center = int((y + y + h) / 2)
 
-        if not validate_counter:
-            continue
+        # Draw bounding box & label
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0,255,0), 2)
+        cv2.putText(frame, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
+        cv2.circle(frame, (x_center, y_center), 4, (0,0,255), -1)
 
-        aspect_ratio = float(w) / h
-        vehicle_type = "Unknown"
+        # Count only if crossing the line
+        if y_center < count_line_position + offset and y_center > count_line_position - offset:
+            counter[label] += 1
 
-        if 1.0 < aspect_ratio < 2.0 and w > 20 and h > 20 and h / w < 1.5:
-            vehicle_type = "Car"
-        elif aspect_ratio >= 2.0 and w > 20 and h >20 :
-            vehicle_type = "Truck"
-        elif 0.0 <= aspect_ratio <= 1.0 and w > 20 and h > 10:
-            vehicle_type = "Bike"
+    # Counting output
+    cv2.putText(frame, f"Car: {counter['car']}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+    cv2.putText(frame, f"Truck: {counter['truck']}", (50, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+    cv2.putText(frame, f"Bike: {counter['motorbike']}", (50, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
-        cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        center = center_handle(x, y, w, h)
-        current_vehicles.append({"center": center, "type": vehicle_type, "counted": False})
+    # Draw line
+    cv2.line(frame, (25, count_line_position), (1200, count_line_position), (255,127,0), 3)
 
-    for vehicle in current_vehicles:
-        x, y = vehicle["center"]
-        cv2.circle(frame1, (x, y), 4, (0, 0, 255), -1)
-        cv2.putText(frame1, f"Type: {vehicle['type']}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-        if not vehicle["counted"] and y < (count_line_position + offset) and y > (count_line_position - offset):
-            counter[vehicle["type"]] += 1
-            vehicle["counted"] = True
-
-    cv2.putText(frame1, "Car Count:" + str(counter["Car"]), (450, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
-    cv2.putText(frame1, "Truck Count:" + str(counter["Truck"]), (450, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
-    cv2.putText(frame1, "Bike Count:" + str(counter["Bike"]), (450, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
-
-    cv2.imshow('video original', frame1)
+    cv2.imshow("Vehicle Detection", frame)
     if cv2.waitKey(1) == 13:
         break
 
-cv2.destroyAllWindows()
 cap.release()
-     
+cv2.destroyAllWindows()

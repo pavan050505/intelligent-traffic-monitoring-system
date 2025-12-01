@@ -7,3 +7,5 @@ streamlit
 folium
 geopandas
 plotly
+Flask
+opencv-python
